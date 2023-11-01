@@ -30,36 +30,14 @@ use Zenstruck\Foundry\RepositoryProxy;
  */
 final class RaceFactory extends ModelFactory
 {
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
-     *
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
-     */
     protected function getDefaults(): array
     {
         return [
-            'averageFinishTimeForLongDistance' => new FinishTime(self::faker()->numberBetween(59 * 60 /* 59 minutes */, 32 * 60 * 60 /* 32 hours */)),
-            'averageFinishTimeForMediumDistance' => new FinishTime(self::faker()->numberBetween(29 * 60 /* 29 minutes */, 24 * 60 * 60 /* 24 hours */)),
+            'averageFinishTimeForLongDistance' => new FinishTime(self::faker()->numberBetween(2 * 60 * 60, 32 * 60 * 60)),
+            'averageFinishTimeForMediumDistance' => new FinishTime(self::faker()->numberBetween(30 * 60, 5 * 60 * 60)),
             'date' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'title' => self::faker()->text(255),
         ];
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
-     */
-    protected function initialize(): self
-    {
-        return $this
-            // ->afterInstantiate(function(Race $race): void {})
-        ;
     }
 
     protected static function getClass(): string

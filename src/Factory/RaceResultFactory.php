@@ -29,38 +29,16 @@ use Zenstruck\Foundry\RepositoryProxy;
  */
 final class RaceResultFactory extends ModelFactory
 {
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
-     */
     protected function getDefaults(): array
     {
         return [
             'ageCategory' => self::faker()->randomElement([
                 'M18-25', 'F18-25', 'M26-34', 'F26-34', 'M35-43', 'F35-43',
             ]),
-            'distance' => self::faker()->randomElement(['long', 'medium']),
-            'finishTime' => null, // TODO add FINISH_TIME type manually
+            'distance' => self::faker()->boolean(70) ? 'medium' : 'long',
             'fullName' => sprintf('%s %s', self::faker()->firstName(self::faker()->boolean() ? 'male' : 'female'), self::faker()->lastName()),
             'race' => RaceFactory::random(),
         ];
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
-     */
-    protected function initialize(): self
-    {
-        return $this
-            // ->afterInstantiate(function(RaceResult $raceResult): void {})
-        ;
     }
 
     protected static function getClass(): string

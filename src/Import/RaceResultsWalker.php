@@ -2,6 +2,7 @@
 
 namespace App\Import;
 
+use App\Entity\Race;
 use App\Entity\RaceResult;
 use App\Model\FinishTime;
 
@@ -9,6 +10,7 @@ class RaceResultsWalker
 {
     private RacePlacementCounter $placementCounter;
     private RaceAverageFinishTimeCalculator $averageFinishTimeCalculator;
+    private ?Race $race = null;
 
     public function __construct()
     {
@@ -18,8 +20,14 @@ class RaceResultsWalker
 
     public function addRaceResult(RaceResult $raceResult): void
     {
+        if ($this->race !== null && $raceResult->getRace() !== $this->race) {
+            throw new \LogicException('RaceResultsWalker can only process the results of a single race at a time');
+        }
+
         $this->placementCounter->addRaceResult($raceResult);
         $this->averageFinishTimeCalculator->addRaceResult($raceResult);
+
+        $this->race = $raceResult->getRace();
     }
 
     public function getOverallPlacement(): int
