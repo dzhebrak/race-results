@@ -14,7 +14,7 @@ class MultipartDecoder implements DecoderInterface
 
     }
 
-    public function decode(string $data, string $format, array $context = [])
+    public function decode(string $data, string $format, array $context = []): mixed
     {
         $request = $this->requestStack->getCurrentRequest();
 
@@ -29,7 +29,7 @@ class MultipartDecoder implements DecoderInterface
         }, $request->request->all()) + $request->files->all();
     }
 
-    public function supportsDecoding(string $format)
+    public function supportsDecoding(string $format): bool
     {
         return self::FORMAT === $format;
     }

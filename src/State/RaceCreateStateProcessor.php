@@ -69,7 +69,7 @@ class RaceCreateStateProcessor implements ProcessorInterface
                 'fullName' => [new NotBlank()],
                 'distance' => [new Choice(callback: [RaceDistance::class, 'values'])],
                 'time' => [new Regex(pattern: FinishTime::TIME_REGEX_PATTERN)],
-                'ageCategory' => [new Regex(pattern: RaceResult::AGE_CATEGORY_REGEX_PATTERN)]
+                'ageCategory' => [new NotBlank()]
             ])
         ]));
 

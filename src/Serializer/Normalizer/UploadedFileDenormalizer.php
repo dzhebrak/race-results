@@ -12,8 +12,16 @@ class UploadedFileDenormalizer implements DenormalizerInterface
         return $data;
     }
 
-    public function supportsDenormalization($data, $type, $format = null): bool
+    public function supportsDenormalization($data, $type, $format = null, array $context = []): bool
     {
         return $data instanceof UploadedFile;
     }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            '*' => false,
+        ];
+    }
+
 }

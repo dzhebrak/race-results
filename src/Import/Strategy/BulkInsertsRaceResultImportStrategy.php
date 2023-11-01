@@ -12,6 +12,7 @@ use App\Model\FinishTime;
 use App\Serializer\NameConverter\RaceResultFinishTimeNameConverter;
 use App\Serializer\Normalizer\FinishTimeNormalizer;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
@@ -43,6 +44,7 @@ class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy
             $i = 0;
 
             foreach ($raceResultIterator as $row) {
+                $i++;
                 $result = $this->serializer->denormalize($row, RaceResult::class);
 
                 $result->setRace($race);
@@ -56,12 +58,12 @@ class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy
 
                 if (($i % self::BATCH_SIZE) === 0) {
                     $manager->flush();
-                    $manager->clear(RaceResult::class);
+                    $this->clearIdentityMap(RaceResult::class, $manager);
                 }
             }
 
             $manager->flush();
-            $manager->clear(RaceResult::class);
+            $this->clearIdentityMap(RaceResult::class, $manager);
 
             $race->setAverageFinishTimeForMediumDistance($this->raceResultsWalker->getAverageFinishTime(RaceDistance::Medium->value));
             $race->setAverageFinishTimeForLongDistance($this->raceResultsWalker->getAverageFinishTime(RaceDistance::Long->value));
@@ -69,5 +71,15 @@ class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy
             $this->validator->validate($race, ['groups' => ['Default', 'import']]);
             $manager->flush();
         });
+    }
+
+    private function clearIdentityMap(string $class, EntityManagerInterface $entityManager): void
+    {
+        $unitOfWork = $entityManager->getUnitOfWork();
+        $entities   = $unitOfWork->getIdentityMap()[$class] ?? [];
+
+        foreach ($entities as $entity) {
+            $entityManager->detach($entity);
+        }
     }
 }

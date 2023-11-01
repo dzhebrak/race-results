@@ -3,7 +3,6 @@
 namespace App\DBAL\Type;
 
 use App\Model\FinishTime;
-use App\Model\RaceFinishTimeTransformer;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\ConversionException;
@@ -13,7 +12,7 @@ class FinishTimeType extends Type
 {
     public const NAME = 'finish_time';
 
-    public function getName()
+    public function getName(): string
     {
         return self::NAME;
     }
@@ -21,7 +20,7 @@ class FinishTimeType extends Type
     /**
      * {@inheritDoc}
      */
-    public function getSQLDeclaration(array $column, AbstractPlatform $platform)
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         return $platform->getIntegerTypeDeclarationSQL($column);
     }
@@ -29,12 +28,12 @@ class FinishTimeType extends Type
     /**
      * {@inheritDoc}
      */
-    public function getBindingType()
+    public function getBindingType(): int
     {
         return ParameterType::INTEGER;
     }
 
-    public function convertToPHPValue($value, AbstractPlatform $platform)
+    public function convertToPHPValue($value, AbstractPlatform $platform): mixed
     {
         try {
             return new FinishTime($value);
@@ -48,7 +47,7 @@ class FinishTimeType extends Type
         }
     }
 
-    public function convertToDatabaseValue($value, AbstractPlatform $platform)
+    public function convertToDatabaseValue($value, AbstractPlatform $platform): mixed
     {
         if ($value === null) {
             return $value;

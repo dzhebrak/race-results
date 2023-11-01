@@ -13,9 +13,9 @@ use Zenstruck\Foundry\Story;
 
 final class RaceStory extends Story
 {
-    public const RACES_NUMBER = 100;
+    public const RACES_NUMBER = 40;
     public const MIN_RESULTS_PER_RACE_NUMBER = 10;
-    public const MAX_RESULTS_PER_RACE_NUMBER = 100;
+    public const MAX_RESULTS_PER_RACE_NUMBER = 20;
 
     public function build(): void
     {
@@ -41,7 +41,6 @@ final class RaceStory extends Story
                     $raceResult->setOverallPlacement($raceResultsWalker->getOverallPlacement());
                     $raceResult->setAgeCategoryPlacement($raceResultsWalker->getAgeCategoryPlacement($raceResult->getAgeCategory()));
                 }
-
 
                 $race->setAverageFinishTimeForLongDistance($raceResultsWalker->getAverageFinishTime(RaceDistance::Long->value));
                 $race->setAverageFinishTimeForMediumDistance($raceResultsWalker->getAverageFinishTime(RaceDistance::Medium->value));

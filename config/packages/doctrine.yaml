@@ -7,6 +7,7 @@ doctrine:
         #server_version: '15'
 
         profiling_collect_backtrace: '%kernel.debug%'
+        use_savepoints: true
         types:
             finish_time: \App\DBAL\Type\FinishTimeType
     orm:

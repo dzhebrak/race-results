@@ -22,10 +22,10 @@ class RaceAverageFinishTimeCalculator
         $this->data[$result->getDistance()]['counter']++;
     }
 
-    public function getAverageFinishTime(string $distance): ?FinishTime
+    public function getAverageFinishTime(string $distance): FinishTime
     {
         if (!isset($this->data[$distance])) {
-            return null;
+            return new FinishTime(0);
         }
 
         return new FinishTime(
