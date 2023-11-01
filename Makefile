@@ -25,9 +25,11 @@ bash:
 db:
 	docker exec -it $$DB_CONTAINER_NAME mysql
 
-test_load_fixtures:
-	docker exec -it $$PHP_CONTAINER_NAME php bin/console --env=test doctrine:schema:update --force --quiet && \
-    docker exec -it $$PHP_CONTAINER_NAME php -d memory_limit=4G bin/console --env=test doctrine:fixtures:load --quiet
+#test_load_fixtures:
+#	docker exec -it $$PHP_CONTAINER_NAME php bin/console --env=test doctrine:schema:update --force --quiet && \
+#    docker exec -it $$PHP_CONTAINER_NAME php -d memory_limit=4G bin/console --env=test doctrine:fixtures:load --quiet
 
 test:
+	docker exec -it $$PHP_CONTAINER_NAME php bin/console --env=test doctrine:schema:update --force --quiet && \
+    docker exec -it $$PHP_CONTAINER_NAME php -d memory_limit=4G bin/console --env=test doctrine:fixtures:load --quiet && \
 	docker exec -it $$PHP_CONTAINER_NAME php bin/phpunit

@@ -2,11 +2,11 @@
 
 namespace App\Story;
 
-use App\Entity\RaceDistance;
 use App\Factory\RaceFactory;
 use App\Factory\RaceResultFactory;
 use App\Import\RaceResultsWalker;
 use App\Model\FinishTime;
+use App\Model\RaceDistance;
 use Faker\Factory as FakerFactory;
 use Zenstruck\Foundry\Factory;
 use Zenstruck\Foundry\Story;

@@ -4,21 +4,13 @@ namespace App\Import\Strategy;
 
 use ApiPlatform\Validator\ValidatorInterface;
 use App\Entity\Race;
-use App\Entity\RaceDistance;
 use App\Entity\RaceResult;
 use App\Import\RaceResultsIterator;
 use App\Import\RaceResultsWalker;
-use App\Model\FinishTime;
-use App\Serializer\NameConverter\RaceResultFinishTimeNameConverter;
-use App\Serializer\Normalizer\FinishTimeNormalizer;
+use App\Model\RaceDistance;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\PropertyAccess\PropertyAccessor;
-use Symfony\Component\Serializer\Encoder\CsvEncoder;
-use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy

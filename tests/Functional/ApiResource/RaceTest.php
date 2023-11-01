@@ -7,78 +7,30 @@ use App\Entity\Race;
 use App\Entity\RaceResult;
 use App\Model\FinishTime;
 use App\Story\RaceStory;
+use App\Tests\Functional\ApiTestHydraContextBuilderTrait;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
-use Zenstruck\Foundry\Test\Factories;
-use Zenstruck\Foundry\Test\ResetDatabase;
 
 class RaceTest extends ApiTestCase
 {
-    use ResetDatabase, Factories;
+    use ApiTestHydraContextBuilderTrait;
 
     public function testGetCollection()
     {
-        RaceStory::load();
-
         $client = static::createClient();
         $response = $client->request('GET', '/api/races');
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-
-        self::assertJsonContains([
-            '@context'         => '/api/contexts/Race',
-            '@id'              => '/api/races',
-            '@type'            => 'hydra:Collection',
-            'hydra:totalItems' => RaceStory::RACES_NUMBER,
-            'hydra:view'       => [
-                '@id'         => '/api/races?page=1',
-                '@type'       => 'hydra:PartialCollectionView',
-                'hydra:first' => '/api/races?page=1',
-                'hydra:last'  => sprintf('/api/races?page=%d', ceil(RaceStory::RACES_NUMBER / 30)),
-                'hydra:next'  => '/api/races?page=2',
-            ],
-            'hydra:search' => [
-                '@type' => "hydra:IriTemplate",
-                'hydra:template' => "/api/races{?order[title],order[date],order[averageFinishTimeForMediumDistance],order[averageFinishTimeForLongDistance],title}",
-                'hydra:variableRepresentation' => 'BasicRepresentation',
-                'hydra:mapping' => [
-                    [
-                        "@type"    => "IriTemplateMapping",
-                        "variable" => "order[title]",
-                        "property" => "title",
-                        "required" => false
-                    ],
-                    [
-                        "@type"=> "IriTemplateMapping",
-                        "variable" => "order[date]",
-                        "property" => "date",
-                        "required" => false
-                    ],
-                    [
-                        "@type" => "IriTemplateMapping",
-                        "variable" => "order[averageFinishTimeForMediumDistance]",
-                        "property"=> "averageFinishTimeForMediumDistance",
-                        "required"=> false
-                    ],
-                    [
-                        "@type" => "IriTemplateMapping",
-                        "variable" => "order[averageFinishTimeForLongDistance]",
-                        "property" => "averageFinishTimeForLongDistance",
-                        "required" => false
-                    ],
-                    [
-                        "@type" => "IriTemplateMapping",
-                        "variable" => "title",
-                        "property" => "title",
-                        "required" => false
-                    ]
-                ],
-            ]
-        ]);
+        self::assertJsonContains($this->buildHydraCollectionSubset(
+            '/api/contexts/Race',
+            '/api/races',
+            RaceStory::RACES_NUMBER,
+            ['order[title]', 'order[date]', 'order[averageFinishTimeForMediumDistance]', 'order[averageFinishTimeForLongDistance]', 'title',]
+        ));
 
         self::assertIsArray($response->toArray()['hydra:member']);
-        self::assertCount(30, $response->toArray()['hydra:member']);
+        self::assertCount(min(30, RaceStory::RACES_NUMBER), $response->toArray()['hydra:member']);
 
         $item = $response->toArray()['hydra:member'][0];
 
