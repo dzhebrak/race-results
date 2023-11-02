@@ -22,6 +22,13 @@ class RaceResultRepository extends ServiceEntityRepository
         parent::__construct($registry, RaceResult::class);
     }
 
+    public function getAverageFinishTime(Race $race)
+    {
+        return $this->getEntityManager()->createQuery(
+            'SELECT rr.distance as distance, CAST(AVG(rr.finishTime) AS INT) as avgFinishTime FROM App\Entity\RaceResult rr WHERE rr.race = :race GROUP BY rr.distance'
+        )->setParameters(['race' => $race])->getResult();
+    }
+
     public function recalculatePlacements(Race $race)
     {
         // TODO: rewrite using DQL OR QB

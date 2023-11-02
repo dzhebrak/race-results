@@ -4,9 +4,8 @@ namespace App\Story;
 
 use App\Factory\RaceFactory;
 use App\Factory\RaceResultFactory;
-use App\Import\RaceAverageFinishTimeCalculator;
 use App\Model\FinishTime;
-use App\Model\RaceDistance;
+use App\Repository\RaceRepository;
 use App\Repository\RaceResultRepository;
 use Faker\Factory as FakerFactory;
 use Zenstruck\Foundry\Factory;
@@ -18,7 +17,7 @@ final class RaceStory extends Story
     public const MIN_RESULTS_PER_RACE_NUMBER = 10;
     public const MAX_RESULTS_PER_RACE_NUMBER = 20;
 
-    public function __construct(private RaceResultRepository $raceResultRepository)
+    public function __construct(private RaceResultRepository $raceResultRepository, private RaceRepository $raceRepository)
     {
 
     }
@@ -32,7 +31,6 @@ final class RaceStory extends Story
             $race = RaceFactory::createOne(['title' => sprintf('Race #%d [%s]', $i+1, $loadKey)]);
 
             Factory::delayFlush(function () use ($faker, $race) {
-                $finishTimeCalculator   = new RaceAverageFinishTimeCalculator();
                 $finishTimeInSeconds = $faker->numberBetween(5 * 60, 2 * 60 * 60);
                 $resultsNumber = $faker->numberBetween(self::MIN_RESULTS_PER_RACE_NUMBER, self::MAX_RESULTS_PER_RACE_NUMBER);
 
@@ -40,15 +38,12 @@ final class RaceStory extends Story
                     $raceResult = RaceResultFactory::createOne();
                     $finishTimeInSeconds += $faker->numberBetween(1 * 60, 15 * 60);
                     $raceResult->setFinishTime(new FinishTime($finishTimeInSeconds));
-                    $finishTimeCalculator->addRaceResult($raceResult->object());
 
                     $race->addResult($raceResult->object());
                 }
 
-                $race->setAverageFinishTimeForLongDistance($finishTimeCalculator->getAverageFinishTime(RaceDistance::Long->value));
-                $race->setAverageFinishTimeForMediumDistance($finishTimeCalculator->getAverageFinishTime(RaceDistance::Medium->value));
-
                 $this->raceResultRepository->recalculatePlacements($race->object());
+                $this->raceRepository->updateAverageFinishTime($race->object());
             });
         }
     }

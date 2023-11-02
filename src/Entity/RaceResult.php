@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\Patch;
 use App\Model\FinishTime;
 use App\Model\RaceDistance;
 use App\Repository\RaceResultRepository;
+use App\State\RaceResultStateProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -23,7 +24,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity(repositoryClass: RaceResultRepository::class)]
 #[ApiResource(
     operations: [
-        new Patch(),
+        new Patch(
+            processor: RaceResultStateProcessor::class,
+        ),
         new GetCollection(
             uriTemplate: '/races/{raceId}/results',
             uriVariables: [

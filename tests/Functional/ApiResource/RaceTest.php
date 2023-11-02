@@ -11,6 +11,7 @@ use App\Tests\Functional\ApiTestHydraContextBuilderTrait;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
+// TODO: test violations
 class RaceTest extends ApiTestCase
 {
     use ApiTestHydraContextBuilderTrait;
@@ -61,7 +62,7 @@ class RaceTest extends ApiTestCase
         $raceTitle = 'Test Race title';
         $raceDate = '2023-11-01';
 
-        $client->request(Request::METHOD_POST, '/api/races', [
+        $response = $client->request(Request::METHOD_POST, '/api/races', [
             'headers' => ['Content-Type' => 'multipart/form-data'],
             'extra'   => [
                 'parameters' => [
@@ -77,10 +78,18 @@ class RaceTest extends ApiTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
 
+        self::assertArrayHasKey('id', $response->toArray());
+        $raceId = $response->toArray()['id'];
+
         $manager = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $race = $manager->createQuery('SELECT r FROM App\Entity\Race r WHERE r.title=:title AND r.date=:date')->setParameters(['title' => $raceTitle, 'date' => $raceDate])->getOneOrNullResult();
+        $race = $manager->createQuery('SELECT r FROM App\Entity\Race r WHERE r.id=:id')->setParameters(['id' => $raceId])->getOneOrNullResult();
 
         self::assertInstanceOf(Race::class, $race);
+        self::assertSame($raceTitle, $race->getTitle());
+        self::assertSame($raceDate, $race->getDate()->format('Y-m-d'));
+        self::assertSame(25880, $race->getAverageFinishTimeForLongDistance()->toSeconds());
+        self::assertSame(27379, $race->getAverageFinishTimeForMediumDistance()->toSeconds());
+
 
         self::assertEquals(100, $manager->createQuery('SELECT COUNT(rr) FROM App\Entity\RaceResult rr WHERE rr.race=:race')->setParameters(['race' => $race])->getSingleScalarResult());
         self::assertEquals(

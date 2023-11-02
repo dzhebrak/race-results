@@ -11,6 +11,7 @@ use App\Model\RaceDistance;
 use App\Tests\Functional\ApiTestHydraContextBuilderTrait;
 use Doctrine\ORM\EntityManagerInterface;
 
+// TODO: test violations
 class RaceResultTest extends ApiTestCase
 {
     use ApiTestHydraContextBuilderTrait;
@@ -64,5 +65,35 @@ class RaceResultTest extends ApiTestCase
         self::assertCount(0, array_filter($response->toArray()['hydra:member'], static fn(array $item) => $item['distance'] === 'medium' && ($item['overallPlacement'] || $item['ageCategoryPlacement'])));
 
         self::assertMatchesResourceItemJsonSchema(RaceResult::class);
+    }
+
+    public function testUpdateRaceResult()
+    {
+        $raceResult = $this->entityManager->createQuery('SELECT r, RAND() as HIDDEN rand from App\Entity\RaceResult r ORDER BY rand')->setMaxResults(1)->getOneOrNullResult();
+        self::assertInstanceOf(RaceResult::class, $raceResult);
+
+        $raceResultId = $raceResult->getId();
+        $newFullName = 'New full name 1';
+        $newFinishTime = '2:30:00';
+        $newDistance = $raceResult->getDistance() === 'long' ? 'medium' : 'long';
+        $newAgeCategory = 'F35-43';
+
+        $response = $this->client->request('PATCH', sprintf('/api/race_results/%s', $raceResult->getId()), [
+            'headers' => ['Content-Type' => 'application/merge-patch+json'],
+            'json' => [
+                'fullName' => $newFullName,
+                'finishTime' => $newFinishTime,
+                'distance' => $newDistance,
+                'ageCategory' => $newAgeCategory
+            ]
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
+        self::assertSame($newFullName, $response->toArray()['fullName']);
+        self::assertSame($newFinishTime, $response->toArray()['time']);
+        self::assertSame($newAgeCategory, $response->toArray()['ageCategory']);
+        self::assertSame($newDistance, $response->toArray()['distance']);
+        // TODO: test placements
     }
 }

@@ -19,7 +19,9 @@ doctrine:
         auto_mapping: true
         dql:
             numeric_functions:
-                Rand: \App\ORM\DQL\Rand
+                rand: DoctrineExtensions\Query\Mysql\Rand
+            string_functions:
+                cast: DoctrineExtensions\Query\Mysql\Cast
         mappings:
             App:
                 type: attribute

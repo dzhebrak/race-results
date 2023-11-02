@@ -40,14 +40,10 @@ services:
         arguments:
             $normalizers: ['@app.serializer.normalizer.race_result', '@App\Serializer\Normalizer\FinishTimeNormalizer']
             $encoders: ['@serializer.encoder.csv']
-
-    App\Import\Strategy\BulkInsertsRaceResultImportStrategy:
-        arguments:
-            $serializer: '@app.serializer.serializer.import_race_results'
     
     App\State\RaceCreateStateProcessor:
         arguments:
             $serializer: '@app.serializer.serializer.import_race_results'
-        
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
