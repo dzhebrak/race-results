@@ -5,8 +5,8 @@ namespace App\Import\Strategy;
 use ApiPlatform\Validator\ValidatorInterface;
 use App\Entity\Race;
 use App\Entity\RaceResult;
+use App\Import\RaceAverageFinishTimeCalculator;
 use App\Import\RaceResultsIterator;
-use App\Import\RaceResultsWalker;
 use App\Model\RaceDistance;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,13 +15,10 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy
 {
-    public const BATCH_SIZE = 3;
-
-    private RaceResultsWalker $raceResultsWalker;
+    public const BATCH_SIZE = 500;
 
     public function __construct(private readonly ManagerRegistry $managerRegistry, readonly private ValidatorInterface $validator, private readonly SerializerInterface $serializer)
     {
-        $this->raceResultsWalker = new RaceResultsWalker();
     }
 
     public function import(Race $race, RaceResultsIterator $raceResultIterator)
@@ -30,48 +27,44 @@ class BulkInsertsRaceResultImportStrategy implements RaceResultImportStrategy
         $manager = $this->managerRegistry->getManagerForClass(Race::class);
 
         $manager->wrapInTransaction(function () use ($race, $raceResultIterator, $manager) {
+            $averageFinishTimeCalculator = new RaceAverageFinishTimeCalculator();
             $manager->persist($race);
-            $manager->flush();
 
-            $i = 0;
-
-            foreach ($raceResultIterator as $row) {
-                $i++;
+            foreach ($raceResultIterator as $idx => $row) {
                 $result = $this->serializer->denormalize($row, RaceResult::class);
-
                 $result->setRace($race);
-                $result->setOverallPlacement($this->raceResultsWalker->getOverallPlacement() + 1);
-                $result->setAgeCategoryPlacement($this->raceResultsWalker->getAgeCategoryPlacement($result->getAgeCategory()) + 1);
-
 
                 $this->validator->validate($result);
-                $this->raceResultsWalker->addRaceResult($result);
                 $manager->persist($result);
+                $averageFinishTimeCalculator->addRaceResult($result);
 
-                if (($i % self::BATCH_SIZE) === 0) {
+                if (($idx % self::BATCH_SIZE) === 0) {
                     $manager->flush();
-                    $this->clearIdentityMap(RaceResult::class, $manager);
+                    $this->clearIdentityMap($manager);
                 }
             }
 
             $manager->flush();
-            $this->clearIdentityMap(RaceResult::class, $manager);
+            $this->clearIdentityMap($manager);
 
-            $race->setAverageFinishTimeForMediumDistance($this->raceResultsWalker->getAverageFinishTime(RaceDistance::Medium->value));
-            $race->setAverageFinishTimeForLongDistance($this->raceResultsWalker->getAverageFinishTime(RaceDistance::Long->value));
+            $race->setAverageFinishTimeForMediumDistance($averageFinishTimeCalculator->getAverageFinishTime(RaceDistance::Medium->value));
+            $race->setAverageFinishTimeForLongDistance($averageFinishTimeCalculator->getAverageFinishTime(RaceDistance::Long->value));
 
             $this->validator->validate($race, ['groups' => ['Default', 'import']]);
+
+            $manager->getRepository(RaceResult::class)->recalculatePlacements($race);
             $manager->flush();
         });
     }
 
-    private function clearIdentityMap(string $class, EntityManagerInterface $entityManager): void
+    private function clearIdentityMap(EntityManagerInterface $entityManager): void
     {
         $unitOfWork = $entityManager->getUnitOfWork();
-        $entities   = $unitOfWork->getIdentityMap()[$class] ?? [];
+        $entities   = $unitOfWork->getIdentityMap()[RaceResult::class] ?? [];
 
         foreach ($entities as $entity) {
             $entityManager->detach($entity);
+            unset($entity);
         }
     }
 }

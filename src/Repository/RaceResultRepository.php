@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Race;
 use App\Entity\RaceResult;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,28 +22,27 @@ class RaceResultRepository extends ServiceEntityRepository
         parent::__construct($registry, RaceResult::class);
     }
 
-//    /**
-//     * @return RaceResult[] Returns an array of RaceResult objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('r')
-//            ->andWhere('r.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('r.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function recalculatePlacements(Race $race)
+    {
+        // TODO: rewrite using DQL OR QB
+        // TODO: add tests
+        $stmt = $this->getEntityManager()->getConnection()->prepare("
+            UPDATE race_result rr
+            INNER JOIN (
+                SELECT
+                    id,
+                    RANK() OVER (ORDER BY finish_time) AS overall_placement,
+                    RANK() OVER (PARTITION BY age_category ORDER BY finish_time) AS age_category_placement
+                FROM race_result
+                WHERE race_id = :raceId AND distance = :distance
+            ) rrp ON rr.id = rrp.id
+            SET rr.overall_placement = rrp.overall_placement, rr.age_category_placement = rrp.age_category_placement
+            WHERE race_id = :raceId AND distance = :distance
+        ");
 
-//    public function findOneBySomeField($value): ?RaceResult
-//    {
-//        return $this->createQueryBuilder('r')
-//            ->andWhere('r.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        $stmt->executeStatement([
+            'raceId'   => $race->getId(),
+            'distance' => 'long'
+        ]);
+    }
 }

@@ -9,17 +9,5 @@ use App\Model\FinishTime;
  */
 class RaceResultsIterator extends \ArrayIterator
 {
-    /**
-     * @param array<array> $elements
-     */
-    public function __construct(array $elements)
-    {
-        parent::__construct($elements);
 
-        $this->uasort(function ($a, $b) {
-
-
-            return FinishTime::fromTime($a['time'] ?? null)->toSeconds() <=> FinishTime::fromTime($b['time'] ?? null)->toSeconds();
-        });
-    }
 }

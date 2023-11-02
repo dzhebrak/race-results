@@ -106,23 +106,6 @@ class RaceResult
     #[Assert\NotNull]
     private ?Race $race = null;
 
-    #[Assert\Callback]
-    public function validate(ExecutionContextInterface $context, mixed $payload): void
-    {
-        $placementsConstraints = [
-            new Assert\NotNull(),
-            new Assert\Positive(),
-        ];
-
-        if ($this->isOverallPlacementRequired()) {
-            $context->getValidator()->inContext($context)->atPath('overallPlacement')->validate($this->overallPlacement, $placementsConstraints);
-        }
-
-        if ($this->isAgeCategoryPlacementRequired()) {
-            $context->getValidator()->inContext($context)->atPath('ageCategoryPlacement')->validate($this->ageCategoryPlacement, $placementsConstraints);
-        }
-    }
-
     #[Serializer\Ignore]
     public function isOverallPlacementRequired(): bool
     {

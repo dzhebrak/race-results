@@ -10,7 +10,6 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use App\Controller\Action\ImportRaceAction;
 use App\Model\FinishTime;
 use App\Repository\RaceRepository;
 use App\State\RaceCreateStateProcessor;
