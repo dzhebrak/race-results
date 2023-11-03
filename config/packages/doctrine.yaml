@@ -10,6 +10,8 @@ doctrine:
         use_savepoints: true
         types:
             finish_time: \App\DBAL\Type\FinishTimeType
+        options:
+            !php/const PDO::MYSQL_ATTR_LOCAL_INFILE: true
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

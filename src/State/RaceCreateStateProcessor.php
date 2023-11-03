@@ -2,19 +2,17 @@
 
 namespace App\State;
 
-use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Symfony\Validator\Exception\ValidationException;
-use ApiPlatform\Validator\ValidatorInterface as ApiPlatformValidatorInterface;
 use App\Entity\Race;
 use App\Entity\RaceResult;
+use App\Import\RaceResultImportStrategy;
 use App\Model\FinishTime;
 use App\Model\RaceDistance;
 use App\Validator\RaceResultAll;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -30,15 +28,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface as SymfonyValidator
  */
 class RaceCreateStateProcessor implements ProcessorInterface
 {
-    public const BATCH_SIZE = 500;
 
     public function __construct(
+        readonly private RaceResultImportStrategy $raceResultImportStrategy,
         readonly private RequestStack $requestStack,
-        readonly private PersistProcessor $persistProcessor,
         readonly private ManagerRegistry $managerRegistry,
         readonly private SerializerInterface $serializer,
-        readonly private SymfonyValidatorInterface $validator,
-        readonly private ApiPlatformValidatorInterface $apiPlatformValidator
+        readonly private SymfonyValidatorInterface $validator
     )
     {
 
@@ -53,6 +49,10 @@ class RaceCreateStateProcessor implements ProcessorInterface
         if (!($uploadedFile = $this->requestStack->getCurrentRequest()->files->get('file'))) {
             return $data;
         }
+        /** @var EntityManager $manager */
+        $manager = $this->managerRegistry->getManagerForClass(Race::class);
+
+        $manager->getConnection()->getConfiguration()->setMiddlewares([]);
 
         $results = $this->serializer->decode(
             file_get_contents($uploadedFile->getPathname()),
@@ -61,33 +61,7 @@ class RaceCreateStateProcessor implements ProcessorInterface
 
         $this->validateResults($results);
 
-        /** @var EntityManager $manager */
-        $manager = $this->managerRegistry->getManagerForClass(Race::class);
-
-        return $manager->wrapInTransaction(function () use ($data, $results, $manager, $operation, $uriVariables, $context) {
-            $manager->persist($data);
-
-            foreach ($results as $idx => $row) {
-                $result = $this->serializer->denormalize($row, RaceResult::class);
-                $result->setRace($data);
-
-                $this->apiPlatformValidator->validate($result);
-                $manager->persist($result);
-
-                if (($idx % self::BATCH_SIZE) === 0) {
-                    $manager->flush();
-                    $this->clearIdentityMap($manager);
-                }
-            }
-
-            $manager->flush();
-
-            $manager->getRepository(RaceResult::class)->recalculatePlacements($data);
-            $manager->getRepository(Race::class)->updateAverageFinishTime($data);
-            $this->clearIdentityMap($manager);
-
-            return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
-        });
+        return $this->raceResultImportStrategy->import($data, $results, $operation, $uriVariables, $context);
     }
 
     /**
@@ -96,29 +70,19 @@ class RaceCreateStateProcessor implements ProcessorInterface
      */
     protected function validateResults(array $results)
     {
-        $violations = $this->validator->validate($results, new RaceResultAll([
-            new Collection([
-                'fullName' => [new NotBlank()],
-                'distance' => [new Choice(callback: [RaceDistance::class, 'values'])],
-                'time' => [new Regex(pattern: FinishTime::TIME_REGEX_PATTERN)],
-                'ageCategory' => [new NotBlank()]
+        $violations = $this->validator->validate(
+            $results, new RaceResultAll([
+                new Collection([
+                    'fullName'    => [new NotBlank()],
+                    'distance'    => [new Choice(callback: [RaceDistance::class, 'values'])],
+                    'time'        => [new Regex(pattern: FinishTime::TIME_REGEX_PATTERN)],
+                    'ageCategory' => [new Regex(pattern: RaceResult::AGE_CATEGORY_REGEX_PATTERN)]
+                ])
             ])
-        ]));
+        );
 
         if ($violations->count() !== 0) {
             throw new ValidationException($violations, errorTitle: 'Invalid race result data');
         }
     }
-
-    private function clearIdentityMap(EntityManagerInterface $entityManager): void
-    {
-        $unitOfWork = $entityManager->getUnitOfWork();
-        $entities   = $unitOfWork->getIdentityMap()[RaceResult::class] ?? [];
-
-        foreach ($entities as $entity) {
-            $entityManager->detach($entity);
-            unset($entity);
-        }
-    }
-
 }

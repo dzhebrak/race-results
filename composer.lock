@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "85f0cc36d2d484c380cc2dba696018e5",
+    "content-hash": "28d22a891d489aad1f11fd46508c2283",
     "packages": [
         {
             "name": "api-platform/core",
@@ -1675,6 +1675,48 @@
                 "source": "https://github.com/FakerPHP/Faker/tree/v1.23.0"
             },
             "time": "2023-06-12T08:44:38+00:00"
+        },
+        {
+            "name": "franzose/doctrine-bulk-insert",
+            "version": "v2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/franzose/doctrine-bulk-insert.git",
+                "reference": "1466d9b7c2f3281e453200beb9193be09ec9d458"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/franzose/doctrine-bulk-insert/zipball/1466d9b7c2f3281e453200beb9193be09ec9d458",
+                "reference": "1466d9b7c2f3281e453200beb9193be09ec9d458",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": "^2.5|^3.3",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.5",
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Franzose\\DoctrineBulkInsert\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Bulk insert functionality for the Doctrine/DBAL",
+            "support": {
+                "issues": "https://github.com/franzose/doctrine-bulk-insert/issues",
+                "source": "https://github.com/franzose/doctrine-bulk-insert/tree/v2.0"
+            },
+            "time": "2022-06-13T06:06:25+00:00"
         },
         {
             "name": "monolog/monolog",
